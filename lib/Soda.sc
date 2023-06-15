@@ -6,7 +6,7 @@ Soda_Bitters {
 		inverse = 6.collect { IdentityDictionary.new };
 		lastAction = 0;
 		
-		Startup.add {
+		StartUp.add {
 			(Routine.new {
 				10.yield;
 				Server.default.sync;
@@ -32,6 +32,8 @@ Soda_Bitters {
 				var lpitch = \lpitch.kr(0.0);
 				var freq1 = (note + \pitch1.kr(0.0) + (1.2 * mpitch * mod_env) + (1.2 * lpitch * lfo)).midicps;
 				var freq2 = (note + \pitch2.kr(0.0) + (1.2 * mpitch * mod_env) + (1.2 * lpitch * lfo)).midicps;
+				var ratio1 = \numerator1.kr(1) / \denominator1.kr(1);
+				var ratio2 = \numerator2.kr(1) / \denominator2.kr(1);
 				var fm1 = SinOsc.ar(
 					freq:(ratio1 * freq1),
 					mul:(\index1.kr(0.0) + (2.0 * \mindex1.kr(0.0) * mod_env) + (2.0 * \lindex1.kr(0.0) * lfo)));
@@ -46,8 +48,8 @@ Soda_Bitters {
 				var osc2 = \tri2.kr(1.0) * TrianglePTR.ar(freq:freq2, phase: fm2, sync:sync * osc1[1], width:pw2)
 				+ \pulse2.kr(0.0) * PulsePTR.ar(freq:freq2, phase:fm2, sync:sync * osc1[1], width:pw2);
 				var snd = LinXFade2.ar(osc1[0], osc2[0], \mix.kr(0));
-				var lofreq = lopass * (2.pow( (5.0 * \mlopass.kr(0) * mod_env) + (2.5 * \llopass.kr(0) * lfo)));
-				var hifreq = hipass * (2.pow( (5.0 * \mhipass.kr(0) * mod_env) + (2.5 * \lhipass.kr(0) * lfo)));
+				var lofreq = \lopass.kr(22000) * (2.pow( (5.0 * \mlopass.kr(0) * mod_env) + (2.5 * \llopass.kr(0) * lfo)));
+				var hifreq = \hipass.k(10) * (2.pow( (5.0 * \mhipass.kr(0) * mod_env) + (2.5 * \lhipass.kr(0) * lfo)));
 				var degrade = \degrade.kr(0.0);
 				snd = Decimator.ar(snd, (48000.0 / (1.0 + (15.0 * degrade))), (16.0 - (12.0 * degrade)));
 				snd = SVF.ar(snd, hifreq, (\hires.kr(0.0) + (\mhires.kr(0.0) * mod_env) + (\lhires.kr(0.0) * lfo)), lowpass:0, hiphpass:1);
@@ -58,14 +60,16 @@ Soda_Bitters {
 				Out.ar(\sendBBus.kr(0), \sendB.kr(0)*snd);
 			}).add;
 			SynthDef(\soda_bitters_perc, { |out|
-				var amp_env = Env.perc(\attack.kr(0.0015), \release(0.8), \amp.kr(0.5)).kr(2);
-				var mod_env = Env.perc(\mattack.kr(0.0015), \mrelease(0.8)).kr(0);
+				var amp_env = Env.perc(\attack.kr(0.0015), \release.kr(0.8), \amp.kr(0.5)).kr(2);
+				var mod_env = Env.perc(\mattack.kr(0.0015), \mrelease.kr(0.8)).kr(0);
 				var lfo = LFTri.kr(\lfreq.kr(4.0), mul:Env.asr(\lfade.kr(0.0), 1, 10).kr(0));
 				var note = \note.kr(69);
 				var mpitch = \mpitch.kr(0.0);
 				var lpitch = \lpitch.kr(0.0);
 				var freq1 = (note + \pitch1.kr(0.0) + (1.2 * mpitch * mod_env) + (1.2 * lpitch * lfo)).midicps;
 				var freq2 = (note + \pitch2.kr(0.0) + (1.2 * mpitch * mod_env) + (1.2 * lpitch * lfo)).midicps;
+				var ratio1 = \numerator1.kr(1) / \denominator1.kr(1);
+				var ratio2 = \numerator2.kr(1) / \denominator2.kr(1);
 				var fm1 = SinOsc.ar(
 					freq:(ratio1 * freq1),
 					mul:(\index1.kr(0.0) + (2.0 * \mindex1.kr(0.0) * mod_env) + (2.0 * \lindex1.kr(0.0) * lfo)));
@@ -102,7 +106,7 @@ Soda_Bitters {
 						\lopass, \mlopass, \llopass, \lores, \mlores, \llores,
 						\hipass, \mhipass, \lhipass, \hires, \mhires, \lhires,
 						\degrade, \sendA, \sendB
-					]
+					],
 					msg[1..]
 				].lace;
 				Synth.new(
@@ -125,7 +129,7 @@ Soda_Bitters {
 						\lopass, \mlopass, \llopass, \lores, \mlores, \llores,
 						\hipass, \mhipass, \lhipass, \hires, \mhires, \lhires,
 						\degrade, \sendA, \sendB
-					]
+					],
 					msg[3..]
 				].lace;
 				var syn;
@@ -151,7 +155,7 @@ Soda_Bitters {
 					});
 					if (notes[voice].includesKey(note), {
 						var toEnd = notes[voice][note];
-						toend.set
+						toEnd.set(\gate, 0);
 					});
 					notes[voice].put(note, syn);
 					inverse[voice].put(syn, note);
@@ -175,7 +179,9 @@ Soda_Bitters {
 					\amp, \attack, \decay, \sustain, \release,
 					\mattack, \mdecay, \msustain, \mrelease,
 					\lfreq, \lfade, \pitch1, \pitch2, \mpitch, \lpitch,
+					\numerator1, \denominator1,
 					\index1, \mindex1, \lindex1, \index2, \mindex2, \lindex2,
+					\numerator2, \denominator2,
 					\width1, \mwidth1, \lwidth1, \width2, \mwidth2, \lwidth2,
 					\sync, \tri1, \pulse1, \tri2, \pulse2, \mix,
 					\lopass, \mlopass, \llopass, \lores, \mlores, \llores,
@@ -238,7 +244,7 @@ Soda_Turns {
 		inverse = 6.collect { IdentityDictionary.new };
 		lastAction = 0;
 		
-		Startup.add {
+		StartUp.add {
 			(Routine.new {
 				10.yield;
 				Server.default.sync;
@@ -276,7 +282,7 @@ Soda_Turns {
 				var note = msg[2].asInteger;
 				var args = [
 					[
-						\mod_gate, \amp, \pan
+						\mod_gate, \amp, \pan,
 						\amp_attack, \amp_decay, \amp_sustain, \amp_release,
 						\mod_attack, \mod_decay, \mod_sustain, \mod_release,
 						\lfo_freq, \lfo_fade, \lfo_amp_mod,
@@ -286,13 +292,13 @@ Soda_Turns {
 						\lfo_formant_width_mod, \env_formant_width_mod, \square_formant_mod, \lfo_formant_mod, \env_formant_mod,
 						\fm_numerator, \fm_denominator,
 						\fm_index, \env_index_mod, \lfo_index_mod,
-						\square_amp
+						\square_amp,
 						\formant_amp, \square_formant_amp_mod,
 						\env_lowpass_mod, \lfo_lowpass_mod, \lowpass_freq, \lowpass_resonance,
 						\env_highpass_mod, \lfo_highpass_mod, \highpass_freq, \highpass_resonance,
 						\sendA, \sendB
-					]
-					msg[3..]
+					],
+					msg[3..],
 				].lace;
 				var syn;
 				(Routine {
@@ -317,7 +323,7 @@ Soda_Turns {
 					});
 					if (notes[voice].includesKey(note), {
 						var toEnd = notes[voice][note];
-						toend.set
+						toEnd.set(\gate, 0);
 					});
 					notes[voice].put(note, syn);
 					inverse[voice].put(syn, note);
@@ -338,7 +344,7 @@ Soda_Turns {
 				var note = msg[2].asInteger;
 				var new_note = msg[3].asInteger;
 				var args = [[
-					\amp_gate, \mod_gate, \amp, \pan
+					\amp_gate, \mod_gate, \amp, \pan,
 					\amp_attack, \amp_decay, \amp_sustain, \amp_release,
 					\mod_attack, \mod_decay, \mod_sustain, \mod_release,
 					\lfo_freq, \lfo_fade, \lfo_amp_mod,
@@ -348,7 +354,7 @@ Soda_Turns {
 					\lfo_formant_width_mod, \env_formant_width_mod, \square_formant_mod, \lfo_formant_mod, \env_formant_mod,
 					\fm_numerator, \fm_denominator,
 					\fm_index, \env_index_mod, \lfo_index_mod,
-					\square_amp
+					\square_amp,
 					\formant_amp, \square_formant_amp_mod,
 					\env_lowpass_mod, \lfo_lowpass_mod, \lowpass_freq, \lowpass_resonance,
 					\env_highpass_mod, \lfo_highpass_mod, \highpass_freq, \highpass_resonance,

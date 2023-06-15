@@ -55,6 +55,81 @@ end
 
 local style_opts = { "perc", "poly" }
 
+local function add_turns_params(i)
+	local function lin(min, max, default)
+    return controlspec.new(min, max, "lin", 0, default)
+  end
+  local function ext(min, max, default)
+    return controlspec.new(min, max, "exp", 0, default)
+  end
+  local function add(name, f)
+    local function underscore_to_space(str)
+      return string.gsub(str, "_", " ")
+    end
+    params:add{
+      type = "control",
+      id = t(i, name),
+      name = underscore_to_space(name),
+      controlspec = f,
+    }
+  end
+  params:add_group(t(i, "group"), "turns voice " .. i, 54)
+  add("amp", lin(0, 1, 0.5))
+  add("square_amp", lin(0, 1, 0.5))
+  add("formant_amp", lin(0, 1, 0.5))
+  add("lfo_amp_mod", lin(0, 1, 0))
+  add("pan", lin(-1, 1, 0))
+  params:add_separator(t(i, "amp_env"), "amp env")
+  add("attack", lin(0, 2, 0.1))
+  add("decay", lin(0, 4, 0.3))
+  add("sustain", lin(0, 1, 0.7))
+  add("release", lin(0, 3, 0.2))
+  params:add_separator(t(i, "lfo"), "lfo")
+  add("lfo_freq", exp(0.01, 10, 1))
+  add("lfo_fade", lin(0, 1, 0))
+  params:add_separator(t(i, "mod_env"), "mod env")
+  add("mod_attack", lin(0, 2, 0.1))
+  add("mod decay", lin(0, 4, 0.3))
+  add("mod sustain", lin(0, 1, 0.7))
+  add("mod release", lin(0, 3, 0.2))
+  params:add_separator(t(i, "pitch"), "pitch")
+  add("square_octave", controlspec.new(-2, 2, "lin", 1, 0))
+  add("square_step", controlspec.new(-12, 12, "lin", 1, 0))
+  add("square_cents", lin(-100, 100, 0))
+  add("formant_octave", controlspec.new(-2, 2, "lin", 1, 0))
+  add("formant_step", controlspec.new(-12, 12, "lin", 1, 0))
+  add("formant_cents", lin(-100, 100, 0))
+  add("lfo_pitch_mod", lin(0, 1, 0))
+  add("env_pitch_mod", lin(0, 1, 0))
+  params:add_separator(t(i, "square"), "square")
+  add("square_width", lin(0, 1, 0.5))
+  add("lfo_sq_width", lin(0, 1, 0))
+  add("env_sq_width", lin(0, 1, 0))
+  add("fm_numerator", controspec.new(1, 50, "lin", 1))
+  add("fm_denominator", controspec.new(1, 50, "lin", 1))
+  add("fm_index", lin(0, 10, 0))
+  add("lfo_index", lin(0, 1, 0))
+  add("env_index", lin(0, 1, 0))
+  params:add_separator(t(i, "formant"), "formant")
+  add("formant_width", lin(0, 1, 0.5))
+  add("lfo_fmt_width", lin(0, 1, 0))
+  add("env_fmt_width", lin(0, 1, 0))
+  add("fmt_freq", lin(-5, 5, 0))
+  add("sq_fmt_freq", lin(0, 1, 0))
+  add("lfo_fmt_freq", lin(0, 1, 0))
+  add("env_fmt_freq", lin(0, 1, 0))
+  add("sq_fmt_amp", lin(0, 1, 0))
+  params:add_separator(t(i, "filter"), "filter")
+  add("highpass", exp(10, 20000, 50))
+  add("lfo_highpass", lin(0, 1, 0))
+  add("env_highpass", lin(0, 1, 0))
+  add("highpass_res", lin(0, 1, 0))
+  add("lowpass", exp(10, 20000, 15000))
+  add("lfo_lowpass", lin(0, 1, 0))
+  add("env_lowpass", lin(0, 1, 0))
+  add("lowpass_res", lin(0, 1, 0))
+end
+
 local function add_bitters_params(i)
   params:add_group(b(i, "group"), "bitters voice " .. i, 45)
   params:hide(b(i, "group"))
@@ -596,9 +671,13 @@ function add_bitters_player(i)
         params:get(b(i, "octave_2")) + params:get(b(i, "coarse_2")) + 0.01 * params:get(b(i, "fine_2")),
         params:get(b(i, "mpitch")),
         params:get(b(i, "lpitch")),
+        params:get(b(i, "numerator_2")),
+        params:get(b(i, "denominator_2")),
         params:get(b(i, "index_1")),
         params:get(b(i, "mindex_1")),
         params:get(b(i, "lindex_1")),
+        params:get(b(i, "numerator_2")),
+        params:get(b(i, "denominator_2")),
         params:get(b(i, "index_2")),
         params:get(b(i, "mindex_2")),
         params:get(b(i, "lindex_2")),
